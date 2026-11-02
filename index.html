@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23667eea'/%3E%3Cstop offset='100%25' stop-color='%23764ba2'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='10' y='8' width='80' height='84' rx='14' fill='url(%23g)'/%3E%3Crect x='10' y='8' width='80' height='22' rx='14' fill='%235a67d8'/%3E%3Crect x='10' y='22' width='80' height='8' fill='%235a67d8'/%3E%3Ccircle cx='30' cy='15' r='4' fill='%23e2e8f0'/%3E%3Ccircle cx='70' cy='15' r='4' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='55' r='13' fill='none' stroke='white' stroke-width='3'/%3E%3Cline x1='50' y1='55' x2='50' y2='47' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='50' y1='55' x2='58' y2='55' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<title>Agenda Pessoal</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',system-ui,-apple-system,sans-serif; }
+  :root{
+    --bg1:#667eea; --bg2:#764ba2; --card:#ffffff; --text:#2d3748; --text-light:#718096;
+    --primary:#667eea; --primary-dark:#5568d3; --accent:#764ba2; --success:#48bb78;
+    --danger:#f56565; --shadow:0 4px 20px rgba(0,0,0,0.1); --radius:16px;
+  }
+  body{
+    min-height:100vh; background:linear-gradient(135deg,var(--bg1),var(--bg2));
+    display:flex; align-items:center; justify-content:center; padding:16px;
+  }
+  .app{
+    width:100%; max-width:420px; background:var(--card); border-radius:24px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.3); overflow:hidden; min-height:600px;
+    display:flex; flex-direction:column;
+  }
+  .screen{ display:none; flex-direction:column; flex:1; animation:fadeIn .3s ease; }
+  .screen.active{ display:flex; }
+  @keyframes fadeIn{ from{opacity:0;transform:translateX(10px)} to{opacity:1;transform:translateX(0)} }
+
+  /* Header */
+  .header{
+    background:linear-gradient(135deg,var(--bg1),var(--accent)); color:#fff;
+    padding:18px 20px; display:flex; align-items:center; gap:14px; position:relative;
+  }
+  .header .icon-box{
+    width:46px; height:46px; border-radius:12px; background:rgba(255,255,255,0.2);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .header .icon-box svg{ width:30px; height:30px; }
+  .header h1{ font-size:18px; font-weight:700; }
+  .header p{ font-size:12px; opacity:.85; }
+  .header .greeting{ margin-left:auto; font-size:14px; font-weight:600; opacity:.9; }
+
+  /* Body */
+  .body{ padding:20px; flex:1; overflow-y:auto; }
+  .section-title{ font-size:15px; font-weight:700; color:var(--text); margin-bottom:12px; }
+
+  /* Profile */
+  .profile-card{
+    display:flex; align-items:center; gap:14px; background:linear-gradient(135deg,#f7fafc,#edf2f7);
+    border-radius:var(--radius); padding:16px; margin-bottom:20px;
+  }
+  .avatar{
+    width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,var(--bg1),var(--accent));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:24px; font-weight:700;
+    flex-shrink:0; overflow:hidden; object-fit:cover; border:3px solid #fff; box-shadow:var(--shadow);
+  }
+  .avatar img{ width:100%; height:100%; object-fit:cover; }
+  .profile-info h2{ font-size:16px; color:var(--text); }
+  .profile-info p{ font-size:13px; color:var(--text-light); }
+  .edit-btn{
+    margin-left:auto; background:var(--primary); color:#fff; border:none; border-radius:10px;
+    padding:8px 14px; font-size:12px; font-weight:600; cursor:pointer; transition:.2s;
+  }
+  .edit-btn:hover{ background:var(--primary-dark); transform:translateY(-1px); }
+
+  /* Forms */
+  .form-group{ margin-bottom:16px; }
+  .form-group label{ display:block; font-size:13px; font-weight:600; color:var(--text-light); margin-bottom:6px; }
+  .form-group input{
+    width:100%; padding:12px 14px; border:2px solid #e2e8f0; border-radius:12px; font-size:14px;
+    color:var(--text); transition:.2s; outline:none; background:#f7fafc;
+  }
+  .form-group input:focus{ border-color:var(--primary); background:#fff; box-shadow:0 0 0 3px rgba(102,126,234,0.1); }
+  .form-group input[type=file]{ padding:8px; }
+  .btn{
+    width:100%; padding:14px; border:none; border-radius:12px; font-size:15px; font-weight:700;
+    cursor:pointer; transition:.2s; display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-primary{ background:linear-gradient(135deg,var(--bg1),var(--accent)); color:#fff; }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 8px 25px rgba(102,126,234,0.4); }
+  .btn-secondary{ background:#edf2f7; color:var(--text); }
+  .btn-secondary:hover{ background:#e2e8f0; }
+  .btn-danger{ background:var(--danger); color:#fff; }
+  .btn-success{ background:var(--success); color:#fff; }
+
+  /* Calendar */
+  .calendar-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .calendar-header h3{ font-size:16px; color:var(--text); }
+  .nav-btn{ background:var(--primary); color:#fff; border:none; width:34px; height:34px; border-radius:10px; font-size:16px; cursor:pointer; transition:.2s; }
+  .nav-btn:hover{ background:var(--primary-dark); }
+  .weekdays{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:8px; }
+  .weekdays span{ text-align:center; font-size:11px; font-weight:700; color:var(--text-light); padding:6px 0; }
+  .days{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .day{
+    aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:10px;
+    font-size:14px; cursor:pointer; transition:.2s; color:var(--text); position:relative;
+  }
+  .day:hover{ background:rgba(102,126,234,0.15); transform:scale(1.05); }
+  .day.other-month{ color:#cbd5e0; }
+  .day.today{ background:linear-gradient(135deg,var(--bg1),var(--accent)); color:#fff; font-weight:700; }
+  .day.selected{ background:var(--primary); color:#fff; font-weight:700; }
+  .day.has-event::after{
+    content:''; position:absolute; bottom:3px; left:50%; transform:translateX(-50%);
+    width:5px; height:5px; border-radius:50%; background:var(--accent);
+  }
+  .day.has-event.today::after{ background:#fff; }
+
+  /* Day info */
+  .day-info{
+    text-align:center; padding:14px; background:linear-gradient(135deg,#f7fafc,#edf2f7);
+    border-radius:var(--radius); margin-bottom:20px;
+  }
+  .day-info .day-name{ font-size:18px; font-weight:700; color:var(--primary); }
+  .day-info .day-date{ font-size:14px; color:var(--text-light); margin-top:4px; }
+
+  /* Action buttons */
+  .actions{ display:flex; flex-direction:column; gap:12px; }
+  .action-btn{
+    display:flex; align-items:center; gap:14px; padding:16px; border-radius:var(--radius);
+    border:none; cursor:pointer; transition:.2s; font-size:15px; font-weight:600; color:#fff;
+    box-shadow:var(--shadow);
+  }
+  .action-btn:hover{ transform:translateY(-3px); box-shadow:0 10px 30px rgba(0,0,0,0.2); }
+  .action-btn.anotar{ background:linear-gradient(135deg,#667eea,#764ba2); }
+  .action-btn.visualizar{ background:linear-gradient(135deg,#f093fb,#f5576c); }
+  .action-btn .a-icon{ width:40px; height:40px; border-radius:12px; background:rgba(255,255,255,0.25); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .action-btn .a-icon svg{ width:22px; height:22px; fill:#fff; }
+
+  /* List header */
+  .list-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:10px; }
+  .list-header h3{ font-size:16px; color:var(--text); }
+  .list-header .back-btn, .list-header .save-btn{
+    border:none; border-radius:10px; padding:8px 16px; font-size:13px; font-weight:700; cursor:pointer; transition:.2s;
+    white-space:nowrap;
+  }
+  .list-header .back-btn{ background:#edf2f7; color:var(--text); }
+  .list-header .back-btn:hover{ background:#e2e8f0; }
+  .list-header .save-btn{ background:var(--success); color:#fff; }
+  .list-header .save-btn:hover{ background:#38a169; }
+
+  /* Hours list */
+  .hours-list{ display:flex; flex-direction:column; gap:8px; }
+  .hour-item{
+    display:flex; align-items:center; gap:12px; padding:10px 14px; background:#f7fafc;
+    border-radius:12px; border:2px solid transparent; transition:.2s;
+  }
+  .hour-item:focus-within{ border-color:var(--primary); background:#fff; }
+  .hour-label{
+    font-size:14px; font-weight:700; color:var(--primary); width:55px; flex-shrink:0;
+  }
+  .hour-input{
+    flex:1; border:none; background:transparent; font-size:14px; color:var(--text); outline:none; padding:4px 0;
+  }
+  .hour-input::placeholder{ color:#a0aec0; }
+
+  /* Appointments list */
+  .appts-list{ display:flex; flex-direction:column; gap:8px; }
+  .appt-item{
+    display:flex; align-items:center; gap:12px; padding:14px; background:#f7fafc; border-radius:12px; transition:.2s;
+    border-left:4px solid var(--primary);
+  }
+  .appt-item:hover{ background:#edf2f7; }
+  .appt-time{
+    font-size:14px; font-weight:700; color:var(--primary); background:rgba(102,126,234,0.1);
+    padding:6px 10px; border-radius:8px; flex-shrink:0;
+  }
+  .appt-text{ flex:1; font-size:14px; color:var(--text); }
+  .appt-date{ font-size:11px; color:var(--text-light); margin-top:2px; }
+  .delete-btn{
+    background:transparent; border:none; color:var(--danger); cursor:pointer; padding:6px; border-radius:8px; transition:.2s;
+    flex-shrink:0;
+  }
+  .delete-btn:hover{ background:rgba(245,101,101,0.1); }
+  .empty-state{ text-align:center; padding:40px 20px; color:var(--text-light); }
+  .empty-state svg{ width:48px; height:48px; fill:#cbd5e0; margin-bottom:12px; }
+
+  /* Notice box */
+  .notice-box{
+    margin-bottom:20px; background:linear-gradient(135deg,#5b6cf9,#8b5cf6); border-radius:var(--radius);
+    padding:16px; color:#fff; box-shadow:0 8px 25px rgba(91,108,249,0.3); position:relative; overflow:hidden;
+  }
+  .notice-box::before{
+    content:''; position:absolute; top:-20px; right:-20px; width:80px; height:80px;
+    background:rgba(255,255,255,0.1); border-radius:50%;
+  }
+  .notice-box .n-icon{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .notice-box .n-icon svg{ width:18px; height:18px; fill:#fff; }
+  .notice-box .n-label{ font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; opacity:.85; }
+  .notice-box .n-time{ font-size:13px; font-weight:600; opacity:.9; }
+  .notice-box .n-text{ font-size:15px; font-weight:600; margin-top:4px; }
+  .notice-box .n-empty{ font-size:14px; opacity:.85; }
+  .notice-nav{ display:flex; gap:8px; margin-top:10px; }
+  .notice-nav button{
+    background:rgba(255,255,255,0.2); border:none; color:#fff; border-radius:8px; padding:6px 12px;
+    font-size:13px; font-weight:600; cursor:pointer; transition:.2s;
+  }
+  .notice-nav button:hover{ background:rgba(255,255,255,0.3); }
+  .notice-nav .n-counter{ font-size:12px; opacity:.8; display:flex; align-items:center; padding:0 6px; }
+
+  /* Registration screen */
+  .reg-screen{ padding:40px 24px; text-align:center; }
+  .reg-screen .logo{
+    width:80px; height:80px; margin:0 auto 16px; border-radius:24px;
+    background:linear-gradient(135deg,var(--bg1),var(--accent));
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 10px 30px rgba(102,126,234,0.4);
+  }
+  .reg-screen .logo svg{ width:48px; height:48px; }
+  .reg-screen h1{ font-size:22px; color:var(--text); margin-bottom:6px; }
+  .reg-screen .sub{ font-size:14px; color:var(--text-light); margin-bottom:24px; }
+  .reg-screen .form-group{ text-align:left; }
+  .avatar-preview{
+    width:90px; height:90px; border-radius:50%; margin:0 auto 12px; border:3px solid var(--primary);
+    background:linear-gradient(135deg,var(--bg1),var(--accent)); display:flex; align-items:center;
+    justify-content:center; color:#fff; font-size:36px; overflow:hidden; cursor:pointer;
+  }
+  .avatar-preview img{ width:100%; height:100%; object-fit:cover; }
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ===== TELA DE CADASTRO ===== -->
+  <div class="screen active" id="screen-cadastro">
+    <div class="reg-screen">
+      <div class="logo">
+        <svg viewBox="0 0 100 100"><rect x="14" y="10" width="72" height="80" rx="12" fill="rgba(255,255,255,0.2)"/><rect x="14" y="10" width="72" height="20" rx="12" fill="rgba(255,255,255,0.25)"/><circle cx="32" cy="16" r="3" fill="#fff"/><circle cx="68" cy="16" r="3" fill="#fff"/><circle cx="50" cy="55" r="12" fill="none" stroke="#fff" stroke-width="3"/><line x1="50" y1="55" x2="50" y2="48" stroke="#fff" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="55" x2="56" y2="55" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
+      </div>
+      <h1>Agenda Pessoal</h1>
+      <p class="sub">Cadastre-se para começar a organizar seus compromissos</p>
+
+      <div class="form-group" style="text-align:center;">
+        <div class="avatar-preview" id="avatarPreview" onclick="document.getElementById('fotoInput').click()">
+          <span id="avatarPlaceholder">👤</span>
+        </div>
+        <input type="file" id="fotoInput" accept="image/*" style="display:none;">
+      </div>
+
+      <div class="form-group">
+        <label>Nome</label>
+        <input type="text" id="nomeInput" placeholder="Digite seu nome">
+      </div>
+      <div class="form-group">
+        <label>Sobrenome</label>
+        <input type="text" id="sobrenomeInput" placeholder="Digite seu sobrenome">
+      </div>
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" id="emailInput" placeholder="exemplo@email.com">
+      </div>
+      <button class="btn btn-primary" onclick="cadastrar()">Cadastrar</button>
+    </div>
+  </div>
+
+  <!-- ===== TELA PRINCIPAL (CALENDÁRIO) ===== -->
+  <div class="screen" id="screen-principal">
+    <div class="header">
+      <div class="icon-box">
+        <svg viewBox="0 0 100 100"><rect x="14" y="10" width="72" height="80" rx="12" fill="rgba(255,255,255,0.2)"/><rect x="14" y="10" width="72" height="20" rx="12" fill="rgba(255,255,255,0.25)"/><circle cx="32" cy="16" r="3" fill="#fff"/><circle cx="68" cy="16" r="3" fill="#fff"/><circle cx="50" cy="55" r="12" fill="none" stroke="#fff" stroke-width="3"/><line x1="50" y1="55" x2="50" y2="48" stroke="#fff" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="55" x2="56" y2="55" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
+      </div>
+      <div>
+        <h1>Agenda Pessoal</h1>
+        <p id="headerDate"></p>
+      </div>
+      <div class="greeting" id="greeting"></div>
+    </div>
+
+    <div class="body">
+      <!-- Profile -->
+      <div class="profile-card">
+        <div class="avatar" id="profileAvatar"></div>
+        <div class="profile-info">
+          <h2 id="profileName"></h2>
+          <p id="profileEmail"></p>
+        </div>
+        <button class="edit-btn" onclick="abrirEdicao()">✏️ Editar</button>
+      </div>
+
+      <!-- Notice Box -->
+      <div class="notice-box" id="noticeBox">
+        <div class="n-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          <span class="n-label">Aviso de Compromisso</span>
+        </div>
+        <div id="noticeContent"></div>
+        <div class="notice-nav" id="noticeNav" style="display:none;">
+          <button onclick="noticePrev()">◀ Anterior</button>
+          <span class="n-counter" id="noticeCounter"></span>
+          <button onclick="noticeNext()">Próximo ▶</button>
+        </div>
+      </div>
+
+      <!-- Calendar -->
+      <div class="calendar-header">
+        <button class="nav-btn" onclick="mesAnterior()">‹</button>
+        <h3 id="monthYear"></h3>
+        <button class="nav-btn" onclick="mesProximo()">›</button>
+      </div>
+      <div class="weekdays">
+        <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+      </div>
+      <div class="days" id="calendarDays"></div>
+
+      <div style="height:20px;"></div>
+
+      <!-- Day info -->
+      <div class="day-info" id="dayInfo" style="display:none;">
+        <div class="day-name" id="selectedDayName"></div>
+        <div class="day-date" id="selectedDayDate"></div>
+      </div>
+
+      <div style="height:8px;"></div>
+
+      <!-- Action buttons -->
+      <div class="actions" id="actions" style="display:none;">
+        <button class="action-btn anotar" onclick="abrirAnotar()">
+          <div class="a-icon"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></div>
+          Anotar Compromissos
+        </button>
+        <button class="action-btn visualizar" onclick="abrirVisualizar()">
+          <div class="a-icon"><svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div>
+          Visualizar Compromissos
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TELA ANOTAR COMPROMISSOS ===== -->
+  <div class="screen" id="screen-anotar">
+    <div class="header">
+      <div class="icon-box">
+        <svg viewBox="0 0 24 24"><path fill="#fff" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+      </div>
+      <div>
+        <h1>Anotar Compromissos</h1>
+        <p id="anotarDate"></p>
+      </div>
+    </div>
+    <div class="body">
+      <div class="list-header">
+        <button class="save-btn" onclick="salvarAnotacoes()">💾 Salvar Anotação</button>
+        <button class="back-btn" onclick="voltarPrincipal()">◀ Voltar</button>
+      </div>
+      <div class="hours-list" id="hoursList"></div>
+    </div>
+  </div>
+
+  <!-- ===== TELA VISUALIZAR COMPROMISSOS ===== -->
+  <div class="screen" id="screen-visualizar">
+    <div class="header">
+      <div class="icon-box">
+        <svg viewBox="0 0 24 24"><path fill="#fff" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+      </div>
+      <div>
+        <h1>Visualizar Compromissos</h1>
+        <p id="visualizarDate"></p>
+      </div>
+    </div>
+    <div class="body">
+      <div class="list-header">
+        <span></span>
+        <button class="back-btn" onclick="voltarPrincipal()">◀ Voltar</button>
+      </div>
+      <div class="appts-list" id="apptsList"></div>
+    </div>
+  </div>
+
+  <!-- ===== TELA EDITAR PERFIL ===== -->
+  <div class="screen" id="screen-editar">
+    <div class="header">
+      <div class="icon-box">
+        <svg viewBox="0 0 24 24"><path fill="#fff" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+      </div>
+      <div><h1>Editar Perfil</h1><p>Atualize seus dados</p></div>
+    </div>
+    <div class="body">
+      <div class="form-group" style="text-align:center;">
+        <div class="avatar-preview" id="editAvatarPreview" onclick="document.getElementById('editFotoInput').click()">
+          <span id="editAvatarPlaceholder">👤</span>
+        </div>
+        <input type="file" id="editFotoInput" accept="image/*" style="display:none;">
+      </div>
+      <div class="form-group">
+        <label>Nome</label>
+        <input type="text" id="editNome" placeholder="Nome">
+      </div>
+      <div class="form-group">
+        <label>Sobrenome</label>
+        <input type="text" id="editSobrenome" placeholder="Sobrenome">
+      </div>
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" id="editEmail" placeholder="E-mail">
+      </div>
+      <button class="btn btn-primary" onclick="salvarEdicao()" style="margin-bottom:10px;">Salvar Alterações</button>
+      <button class="btn btn-danger" onclick="excluirPerfil()" style="margin-bottom:10px;">Excluir Conta</button>
+      <button class="btn btn-secondary" onclick="voltarPrincipal()">Cancelar</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== ESTADO GLOBAL =====
+let currentUser = null;
+let currentDate = new Date();
+let selectedDate = null;
+let viewMonth = new Date();
+let compromissos = {};
+let noticeIndex = 0;
+let noticeList = [];
+
+const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const diasSemana = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+const horas = ['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00'];
+
+// ===== PERSISTÊNCIA =====
+let agendaDBPromise = null;
+function abrirBancoAgenda(){
+  if(!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB indisponível'));
+  if(!agendaDBPromise){
+    agendaDBPromise = new Promise((resolve,reject)=>{
+      const req = indexedDB.open('AgendaPessoalDB', 1);
+      req.onupgradeneeded = function(){
+        const db = req.result;
+        if(!db.objectStoreNames.contains('dados')) db.createObjectStore('dados');
+      };
+      req.onsuccess = ()=>resolve(req.result);
+      req.onerror = ()=>reject(req.error || new Error('Falha ao abrir banco local'));
+      req.onblocked = ()=>reject(new Error('Banco local bloqueado'));
+    });
+  }
+  return agendaDBPromise;
+}
+function salvarNoBanco(chave, valor){
+  return abrirBancoAgenda().then(db=>new Promise((resolve,reject)=>{
+    const tx=db.transaction('dados','readwrite');
+    tx.objectStore('dados').put(valor,chave);
+    tx.oncomplete=()=>resolve(true);
+    tx.onerror=()=>reject(tx.error || new Error('Falha ao gravar banco'));
+    tx.onabort=()=>reject(tx.error || new Error('Gravação cancelada'));
+  }));
+}
+function lerDoBanco(chave){
+  return abrirBancoAgenda().then(db=>new Promise((resolve,reject)=>{
+    const tx=db.transaction('dados','readonly');
+    const req=tx.objectStore('dados').get(chave);
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error || new Error('Falha ao ler banco'));
+  }));
+}
+function removerFotoLegadaDoLocalStorage(){
+  // Versões anteriores guardavam a foto em base64 dentro do perfil no localStorage,
+  // consumindo quase toda a cota disponível. Migra-a e remove o peso da chave antiga.
+  try{
+    const raw=localStorage.getItem('agenda_user');
+    if(!raw) return;
+    const user=JSON.parse(raw);
+    if(user && typeof user.foto==='string' && user.foto.startsWith('data:image/')){
+      const foto=user.foto;
+      user.foto=null;
+      localStorage.setItem('agenda_user',JSON.stringify(user));
+      salvarNoBanco('fotoPerfil',foto).catch(err=>console.warn('Foto mantida apenas nesta sessão:',err));
+      if(currentUser) currentUser.foto=foto;
+    }
+  }catch(err){
+    // Falha ao gravar perfil compacto não impede a tentativa de salvar compromissos.
+    try{
+      const raw=localStorage.getItem('agenda_user');
+      const user=raw && JSON.parse(raw);
+      if(user && user.foto){
+        const foto=user.foto;
+        user.foto=null;
+        salvarNoBanco('fotoPerfil',foto).catch(()=>{});
+        if(currentUser) currentUser.foto=foto;
+        try{localStorage.removeItem('agenda_user');localStorage.setItem('agenda_user',JSON.stringify(user));}catch(_){ }
+      }
+    }catch(_){ }
+  }
+}
+function salvarCompromissos(){
+  removerFotoLegadaDoLocalStorage();
+  const dados=JSON.stringify(compromissos);
+  let salvoLocal=false;
+  try{
+    // Mantém compatibilidade com os dados antigos sem depender do espaço da foto.
+    localStorage.setItem('agenda_compromissos',dados);
+    salvoLocal=true;
+  }catch(err){ /* IndexedDB abaixo é o armazenamento principal de contingência. */ }
+  // Grava também no IndexedDB em todas as alterações. É assíncrono, por isso o botão
+  // Salvar aguarda a confirmação antes de sair da tela.
+  salvarNoBanco('compromissos',dados).catch(err=>console.warn('Falha ao gravar compromissos no banco local.',err));
+  return salvoLocal;
+}
+function saveState(){
+  removerFotoLegadaDoLocalStorage();
+  let userSaved=true;
+  try{
+    const userSemFoto=currentUser ? {...currentUser, foto:null} : currentUser;
+    localStorage.setItem('agenda_user',JSON.stringify(userSemFoto));
+    if(currentUser && currentUser.foto) salvarNoBanco('fotoPerfil',currentUser.foto).catch(err=>console.warn('Não foi possível guardar a foto no banco local.',err));
+  }catch(err){userSaved=false;}
+  const appointmentsSaved=salvarCompromissos();
+  if(!userSaved) alert('O perfil não pôde ser salvo, mas seus compromissos são gravados separadamente.');
+  return appointmentsSaved;
+}
+function loadState(){
+  try{
+    const u=localStorage.getItem('agenda_user');
+    const c=localStorage.getItem('agenda_compromissos');
+    if(u) currentUser=JSON.parse(u);
+    if(c){
+      const parsed=JSON.parse(c);
+      if(parsed && typeof parsed==='object' && !Array.isArray(parsed)) compromissos=parsed;
+    }
+    removerFotoLegadaDoLocalStorage();
+  }catch(err){console.warn('Não foi possível carregar os dados salvos.',err);}
+  // Restore a photo already migrated from the older localStorage-based version.
+  lerDoBanco('fotoPerfil').then(foto=>{
+    if(foto && currentUser){
+      currentUser.foto=foto;
+      const avatar=document.getElementById('profileAvatar');
+      if(avatar && document.getElementById('screen-principal').classList.contains('active')) avatar.innerHTML='<img src="'+foto+'">';
+    }
+  }).catch(()=>{});
+  // Recover appointments from the larger local database if localStorage was full.
+  lerDoBanco('compromissos').then(raw=>{
+    if(!raw) return;
+    try{
+      const saved=typeof raw==='string' ? JSON.parse(raw) : raw;
+      if(saved && typeof saved==='object'){
+        compromissos={...compromissos,...saved};
+        Object.keys(saved).forEach(day=>{compromissos[day]={...(compromissos[day]||{}),...(saved[day]||{})};});
+        try{localStorage.setItem('agenda_compromissos',JSON.stringify(compromissos));}catch(_){ }
+        if(document.getElementById('screen-principal').classList.contains('active')){renderCalendar();updateNotice();}
+      }
+    }catch(err){console.warn('Não foi possível recuperar cópia dos compromissos.',err);}
+  }).catch(()=>{});
+}
+
+// ===== NAVEGAÇÃO ENTRE TELAS =====
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ===== SAUDAÇÃO =====
+function getGreeting(){
+  const h = new Date().getHours();
+  if(h < 12) return '☀️ Bom dia!';
+  if(h < 18) return '🌤️ Boa tarde!';
+  return '🌙 Boa noite!';
+}
+
+// ===== CADASTRO =====
+let fotoTemp = null;
+function processarFotoPerfil(file, aoConcluir){
+  if(!file) return;
+  if(!file.type || !file.type.startsWith('image/')){
+    alert('Escolha um arquivo de imagem válido.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onerror = function(){ alert('Não foi possível ler essa imagem. Tente outra foto.'); };
+  reader.onload = function(ev){
+    const img = new Image();
+    img.onerror = function(){ alert('Não foi possível abrir essa imagem. Tente outra foto.'); };
+    img.onload = function(){
+      try{
+        const limite = 480;
+        const escala = Math.min(1, limite / Math.max(img.naturalWidth, img.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.naturalWidth * escala));
+        canvas.height = Math.max(1, Math.round(img.naturalHeight * escala));
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        // A imagem compactada ocupa muito menos espaço no armazenamento do navegador.
+        aoConcluir(canvas.toDataURL('image/jpeg', 0.78));
+      }catch(err){
+        alert('Não foi possível preparar a foto. Tente escolher outra imagem.');
+      }
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+document.getElementById('fotoInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(file) processarFotoPerfil(file, function(foto){
+    fotoTemp = foto;
+    document.getElementById('avatarPlaceholder').innerHTML = '<img src="'+fotoTemp+'">';
+  });
+});
+
+function cadastrar(){
+  const nome = document.getElementById('nomeInput').value.trim();
+  const sobrenome = document.getElementById('sobrenomeInput').value.trim();
+  const email = document.getElementById('emailInput').value.trim();
+
+  if(!nome || !sobrenome){ alert('Por favor, preencha nome e sobrenome.'); return; }
+  if(!email || !email.includes('@')){ alert('Por favor, informe um e-mail válido.'); return; }
+
+  const usuarioAnterior = currentUser;
+  currentUser = { nome, sobrenome, email, foto: fotoTemp || null };
+  if(!saveState()){ currentUser = usuarioAnterior; return; }
+  if(currentUser.foto) salvarNoBanco('fotoPerfil',currentUser.foto).catch(()=>{});
+  initPrincipal();
+}
+
+// ===== TELA PRINCIPAL =====
+function initPrincipal(){
+  if(!currentUser){ showScreen('screen-cadastro'); return; }
+  showScreen('screen-principal');
+
+  // Profile
+  const initials = (currentUser.nome[0] || '') + (currentUser.sobrenome[0] || '');
+  const avatarEl = document.getElementById('profileAvatar');
+  if(currentUser.foto){
+    avatarEl.innerHTML = '<img src="'+currentUser.foto+'">';
+  } else {
+    avatarEl.textContent = initials.toUpperCase();
+  }
+  document.getElementById('profileName').textContent = currentUser.nome + ' ' + currentUser.sobrenome;
+  document.getElementById('profileEmail').textContent = currentUser.email;
+
+  // Greeting
+  document.getElementById('greeting').textContent = getGreeting();
+  const today = new Date();
+  document.getElementById('headerDate').textContent = today.toLocaleDateString('pt-BR');
+
+  // Calendar
+  renderCalendar();
+  // Notice
+  updateNotice();
+}
+
+// ===== CALENDÁRIO =====
+function renderCalendar(){
+  const year = viewMonth.getFullYear();
+  const month = viewMonth.getMonth();
+  document.getElementById('monthYear').textContent = meses[month] + ' ' + year;
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const daysInPrev = new Date(year, month, 0).getDate();
+
+  let html = '';
+  // Previous month days
+  for(let i = firstDay-1; i >= 0; i--){
+    html += '<div class="day other-month">'+(daysInPrev-i)+'</div>';
+  }
+  const today = new Date();
+  for(let d = 1; d <= daysInMonth; d++){
+    const classes = ['day'];
+    const dateStr = dateKey(new Date(year, month, d));
+    if(year === today.getFullYear() && month === today.getMonth() && d === today.getDate()) classes.push('today');
+    if(selectedDate && dateStr === dateKey(selectedDate)) classes.push('selected');
+    if(compromissos[dateStr] && Object.values(compromissos[dateStr]).some(v => v.trim())) classes.push('has-event');
+    html += '<div class="'+classes.join(' ')+'" onclick="selecionarDia('+year+','+month+','+d+')">'+d+'</div>';
+  }
+  const totalCells = firstDay + daysInMonth;
+  const remaining = (7 - (totalCells % 7)) % 7;
+  for(let i = 1; i <= remaining; i++){
+    html += '<div class="day other-month">'+i+'</div>';
+  }
+  document.getElementById('calendarDays').innerHTML = html;
+}
+
+function dateKey(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function escapeHtml(value){
+  return String(value).replace(/[&<>\"']/g, function(ch){ return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]; });
+}
+
+function selecionarDia(year, month, day){
+  selectedDate = new Date(year, month, day);
+  renderCalendar();
+
+  const dayName = diasSemana[selectedDate.getDay()];
+  const dateStr = selectedDate.toLocaleDateString('pt-BR');
+  document.getElementById('selectedDayName').textContent = dayName;
+  document.getElementById('selectedDayDate').textContent = dateStr;
+  document.getElementById('dayInfo').style.display = 'block';
+  document.getElementById('actions').style.display = 'flex';
+}
+
+function mesAnterior(){ viewMonth.setMonth(viewMonth.getMonth()-1); renderCalendar(); }
+function mesProximo(){ viewMonth.setMonth(viewMonth.getMonth()+1); renderCalendar(); }
+
+// ===== ANOTAR COMPROMISSOS =====
+function abrirAnotar(){
+  if(!selectedDate){ alert('Selecione uma data no calendário.'); return; }
+  showScreen('screen-anotar');
+  document.getElementById('anotarDate').textContent = diasSemana[selectedDate.getDay()] + ', ' + selectedDate.toLocaleDateString('pt-BR');
+
+  const key = dateKey(selectedDate);
+  if(!compromissos[key]) compromissos[key] = {};
+
+  let html = '';
+  horas.forEach(h => {
+    const val = compromissos[key][h] || '';
+    html += '<div class="hour-item"><span class="hour-label">'+h+'</span><input type="text" class="hour-input" data-hour="'+h+'" placeholder="Digite o compromisso..." value="'+val.replace(/"/g,'&quot;')+'"></div>';
+  });
+  document.getElementById('hoursList').innerHTML = html;
+  // Grava cada alteração imediatamente para não perder anotações ao sair da tela.
+  document.querySelectorAll('.hour-input').forEach(inp => {
+    inp.addEventListener('input', function(){
+      const dayKey = dateKey(selectedDate);
+      if(!compromissos[dayKey]) compromissos[dayKey] = {};
+      const text = inp.value.trim();
+      if(text) compromissos[dayKey][inp.dataset.hour] = text;
+      else delete compromissos[dayKey][inp.dataset.hour];
+      if(Object.keys(compromissos[dayKey]).length === 0) delete compromissos[dayKey];
+      salvarCompromissos();
+      salvarNoBanco('compromissos',JSON.stringify(compromissos)).catch(()=>{});
+    });
+  });
+}
+
+async function salvarAnotacoes(){
+  if(!selectedDate){ alert('Selecione uma data antes de salvar.'); return; }
+  const key=dateKey(selectedDate);
+  if(!compromissos[key]) compromissos[key]={};
+  document.querySelectorAll('.hour-input').forEach(inp=>{
+    const h=inp.dataset.hour;
+    const v=inp.value.trim();
+    if(v) compromissos[key][h]=v;
+    else delete compromissos[key][h];
+  });
+  if(Object.keys(compromissos[key]).length===0) delete compromissos[key];
+  removerFotoLegadaDoLocalStorage();
+  const dados=JSON.stringify(compromissos);
+  try{
+    // Aguarda a gravação efetiva no IndexedDB, que não usa a cota do localStorage.
+    await salvarNoBanco('compromissos',dados);
+    try{localStorage.setItem('agenda_compromissos',dados);}catch(_){/* IDB já confirmou; mantém a cópia principal. */}
+    renderCalendar();
+    updateNotice();
+    voltarPrincipal();
+  }catch(err){
+    // Última tentativa no armazenamento antigo, sem perder o texto digitado na tela.
+    try{
+      localStorage.setItem('agenda_compromissos',dados);
+      renderCalendar(); updateNotice(); voltarPrincipal();
+      alert('Anotações salvas no navegador.');
+    }catch(errLocal){
+      alert('Ainda não foi possível gravar: o navegador bloqueou os armazenamentos locais. As anotações continuam nesta tela; não a feche. Libere espaço do site no navegador e tente salvar novamente.');
+    }
+  }
+}
+
+// ===== VISUALIZAR COMPROMISSOS =====
+function abrirVisualizar(){
+  showScreen('screen-visualizar');
+  if(selectedDate){
+    document.getElementById('visualizarDate').textContent = diasSemana[selectedDate.getDay()] + ', ' + selectedDate.toLocaleDateString('pt-BR');
+  } else {
+    document.getElementById('visualizarDate').textContent = 'Todos os compromissos';
+  }
+
+  const listEl = document.getElementById('apptsList');
+  let html = '';
+
+  if(selectedDate){
+    // Show appointments for selected day
+    const key = dateKey(selectedDate);
+    const dayAppts = compromissos[key] || {};
+    const items = Object.keys(dayAppts).sort().map(h => ({ hora: h, texto: dayAppts[h] }));
+
+    if(items.length === 0){
+      listEl.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg><p>Nenhum compromisso para este dia.</p></div>';
+      return;
+    }
+    items.forEach(item => {
+      html += '<div class="appt-item"><span class="appt-time">'+item.hora+'</span><div><div class="appt-text">'+escapeHtml(item.texto)+'</div></div><button class="delete-btn" onclick="deletarCompromisso(\''+key+'\',\''+item.hora+'\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button></div>';
+    });
+  } else {
+    // Show all
+    let allItems = [];
+    Object.keys(compromissos).forEach(k => {
+      Object.keys(compromissos[k]).forEach(h => {
+        allItems.push({ key: k, hora: h, texto: compromissos[k][h] });
+      });
+    });
+    allItems.sort((a,b) => (a.key + a.hora).localeCompare(b.key + b.hora));
+    if(allItems.length === 0){
+      listEl.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg><p>Nenhum compromisso salvo.</p></div>';
+      return;
+    }
+    allItems.forEach(item => {
+      const [y,m,d] = item.key.split('-');
+      const dt = new Date(y, parseInt(m)-1, d);
+      html += '<div class="appt-item"><span class="appt-time">'+item.hora+'</span><div><div class="appt-text">'+escapeHtml(item.texto)+'</div><div class="appt-date">'+dt.toLocaleDateString('pt-BR')+'</div></div><button class="delete-btn" onclick="deletarCompromisso(\''+item.key+'\',\''+item.hora+'\')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button></div>';
+    });
+  }
+  listEl.innerHTML = html;
+}
+
+function deletarCompromisso(key, hora){
+  if(!confirm('Deseja excluir este compromisso?')) return;
+  if(compromissos[key]) delete compromissos[key][hora];
+  saveState();
+  renderCalendar();
+  updateNotice();
+  abrirVisualizar();
+}
+
+// ===== VOLTAR =====
+function voltarPrincipal(){
+  showScreen('screen-principal');
+  // Refresh greeting
+  document.getElementById('greeting').textContent = getGreeting();
+  renderCalendar();
+  updateNotice();
+}
+
+// ===== EDITAR PERFIL =====
+let editFotoTemp = null;
+function abrirEdicao(){
+  document.getElementById('editNome').value = currentUser.nome;
+  document.getElementById('editSobrenome').value = currentUser.sobrenome;
+  document.getElementById('editEmail').value = currentUser.email;
+  editFotoTemp = currentUser.foto;
+  const preview = document.getElementById('editAvatarPreview');
+  if(currentUser.foto){
+    document.getElementById('editAvatarPlaceholder').innerHTML = '<img src="'+currentUser.foto+'">';
+  } else {
+    document.getElementById('editAvatarPlaceholder').textContent = '👤';
+  }
+  showScreen('screen-editar');
+}
+
+document.getElementById('editFotoInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(file) processarFotoPerfil(file, function(foto){
+    editFotoTemp = foto;
+    document.getElementById('editAvatarPlaceholder').innerHTML = '<img src="'+editFotoTemp+'">';
+  });
+});
+
+function salvarEdicao(){
+  const nome = document.getElementById('editNome').value.trim();
+  const sobrenome = document.getElementById('editSobrenome').value.trim();
+  const email = document.getElementById('editEmail').value.trim();
+
+  if(!nome || !sobrenome){ alert('Nome e sobrenome são obrigatórios.'); return; }
+  if(!email || !email.includes('@')){ alert('E-mail inválido.'); return; }
+
+  const usuarioAnterior = currentUser;
+  currentUser = { nome, sobrenome, email, foto: editFotoTemp };
+  if(!saveState()){ currentUser = usuarioAnterior; return; }
+  if(currentUser.foto) salvarNoBanco('fotoPerfil',currentUser.foto).catch(()=>{});
+  initPrincipal();
+}
+
+function excluirPerfil(){
+  if(!confirm('Tem certeza que deseja excluir sua conta? Todos os dados serão perdidos.')) return;
+  currentUser = null;
+  compromissos = {};
+  localStorage.removeItem('agenda_user');
+  localStorage.removeItem('agenda_compromissos');
+  fotoTemp = null;
+  document.getElementById('nomeInput').value = '';
+  document.getElementById('sobrenomeInput').value = '';
+  document.getElementById('emailInput').value = '';
+  document.getElementById('avatarPlaceholder').textContent = '👤';
+  showScreen('screen-cadastro');
+}
+
+// ===== CAIXA DE AVISO =====
+function updateNotice(){
+  const today = new Date();
+  const key = dateKey(today);
+  const dayAppts = compromissos[key] || {};
+  const now = today.getHours() * 60 + today.getMinutes();
+
+  noticeList = Object.keys(dayAppts).map(h => {
+    const [hh, mm] = h.split(':').map(Number);
+    return { hora: h, texto: dayAppts[h], minutes: hh*60 + mm };
+  }).sort((a,b) => a.minutes - b.minutes);
+
+  const contentEl = document.getElementById('noticeContent');
+  const navEl = document.getElementById('noticeNav');
+
+  if(noticeList.length === 0){
+    contentEl.innerHTML = '<div class="n-empty">Nenhum compromisso para hoje. 📅</div>';
+    navEl.style.display = 'none';
+    return;
+  }
+
+  // Find the next upcoming appointment
+  let currentIdx = -1;
+  for(let i = 0; i < noticeList.length; i++){
+    if(noticeList[i].minutes >= now){ currentIdx = i; break; }
+  }
+  if(currentIdx === -1) currentIdx = 0; // all passed, show first
+  noticeIndex = currentIdx;
+
+  renderNotice();
+}
+
+function renderNotice(){
+  if(noticeList.length === 0) return;
+  const item = noticeList[noticeIndex];
+  const now = new Date();
+  const nowMin = now.getHours()*60 + now.getMinutes();
+  let status = '';
+  if(item.minutes < nowMin) status = ' (passado)';
+  else if(item.minutes >= nowMin && item.minutes < nowMin + 60) status = ' (agora!)';
+  else status = ' (a seguir)';
+
+  document.getElementById('noticeContent').innerHTML =
+    '<div class="n-time">⏰ '+item.hora+status+'</div><div class="n-text">'+escapeHtml(item.texto)+'</div>';
+
+  if(noticeList.length > 1){
+    document.getElementById('noticeNav').style.display = 'flex';
+    document.getElementById('noticeCounter').textContent = (noticeIndex+1) + ' / ' + noticeList.length;
+  } else {
+    document.getElementById('noticeNav').style.display = 'none';
+  }
+}
+
+function noticeNext(){
+  if(noticeList.length === 0) return;
+  noticeIndex = (noticeIndex + 1) % noticeList.length;
+  renderNotice();
+}
+function noticePrev(){
+  if(noticeList.length === 0) return;
+  noticeIndex = (noticeIndex - 1 + noticeList.length) % noticeList.length;
+  renderNotice();
+}
+
+// ===== INICIALIZAÇÃO =====
+loadState();
+if(currentUser){
+  initPrincipal();
+} else {
+  showScreen('screen-cadastro');
+}
+
+// Update notice every minute
+setInterval(function(){
+  if(document.getElementById('screen-principal').classList.contains('active')){
+    updateNotice();
+  }
+}, 60000);
+</script>
+</body>
+</html>
